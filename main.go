@@ -18,6 +18,7 @@ type Produk struct {
 var produk = []Produk{
 	{ID: 1, Nama: "Indomie Goreng", Harga: 2000, Stok: 20},
 	{ID: 2, Nama: "Vit 1000ml", Harga: 3000, Stok: 40},
+	{ID: 3, Nama: "Kecap", Harga: 10000, Stok: 50},
 }
 
 func getProdukByID(w http.ResponseWriter, r *http.Request) {
@@ -74,6 +75,35 @@ func updateProduk(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Produk belum ada", http.StatusNotFound)
 }
 
+// DELETE localhost:8080/api/produk/{id}
+func deleteProduk(w http.ResponseWriter, r *http.Request) {
+	// get id
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")
+
+	// ganti id jadi int
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid Produk ID", http.StatusBadRequest)
+		return
+	}
+
+	// loop produk cari id, dapat index yang mau dihapus
+	for i, p := range produk {
+		if p.ID == id {
+			// bikin slice baru yang isinya adalah data sebelum dan sesudah index
+			produk = append(produk[:i], produk[i+1:]...)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "sukses delete",
+			})
+
+			return
+		}
+	}
+
+	http.Error(w, "Produk belum ada", http.StatusNotFound)
+}
+
 func main() {
 	// GET localhost:8080/api/produk/{id}
 	// PUT localhost:8080/api/produk/{id}
@@ -83,6 +113,9 @@ func main() {
 			return
 		} else if r.Method == "PUT" {
 			updateProduk(w, r)
+			return
+		} else if r.Method == "DELETE" {
+			deleteProduk(w, r)
 			return
 		}
 		idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")
