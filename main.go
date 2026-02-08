@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"kasir-api/database"
 	"kasir-api/handlers"
-	"kasir-api/services"
 	"kasir-api/repositories"
+	"kasir-api/services"
 	"log"
 	"net/http"
 	"os"
@@ -16,8 +16,8 @@ import (
 )
 
 type Config struct {
-	Port 	string `mapstructure:"PORT"`
-	DBConn	string `mapstructure:"DB_CONN"`
+	Port   string `mapstructure:"PORT"`
+	DBConn string `mapstructure:"DB_CONN"`
 }
 
 func main() {
@@ -26,11 +26,11 @@ func main() {
 
 	if _, err := os.Stat(".env"); err == nil {
 		viper.SetConfigFile(".env")
-		_ = viper.ReadInConfig(); 
+		_ = viper.ReadInConfig()
 	}
 
 	config := Config{
-		Port: viper.GetString("PORT"),
+		Port:   viper.GetString("PORT"),
 		DBConn: viper.GetString("DB_CONN"),
 	}
 
@@ -42,14 +42,18 @@ func main() {
 	defer db.Close()
 
 	productRepo := repositories.NewProductRepository(db)
-
 	productService := services.NewProductService(productRepo)
-
 	productHandler := handlers.NewProductHandler(productService)
 
 	// Setup routes
 	http.HandleFunc("/api/produk", productHandler.HandleProducts)
 	http.HandleFunc("/api/produk/", productHandler.HandleProductByID)
+
+	transactionRepo := repositories.NewTransactionRepository(db)
+	transactionService := services.NewTransactionService(transactionRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
+
+	http.HandleFunc("/api/checkout", transactionHandler.Checkout)
 
 	// localhost:8080/health
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
